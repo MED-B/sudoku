@@ -27,7 +27,8 @@ let puzzle   = [];
   const { access_token } = await res.json();
   await sdk.commands.authenticate({ access_token });
 
-  const user = await sdk.commands.getUser();
+ const auth = await sdk.commands.authenticate({ access_token });
+  const user = auth.user; // get user from auth response
   myUserId   = user.id;
 
   document.getElementById("my-name").textContent = user.username;
