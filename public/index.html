@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sudoku Battle</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="status">Connecting to Discord...</div>
+
+  <div id="game" class="hidden">
+    <div class="arena">
+
+      <div class="player-section">
+        <h2 id="my-name">You</h2>
+        <div id="my-board" class="board"></div>
+      </div>
+
+      <div class="divider">VS</div>
+
+      <div class="player-section">
+        <h2 id="opp-name">Waiting for opponent...</h2>
+        <div id="opp-board" class="board"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="winner-banner" class="hidden"></div>
+
+  <script>window.__DISCORD_CLIENT_ID__ = "__DISCORD_CLIENT_ID__";</script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@latest/dist/index.min.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
