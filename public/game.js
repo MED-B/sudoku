@@ -12,7 +12,7 @@ let puzzle   = [];
   await sdk.ready();
 
   const { code } = await sdk.commands.authorize({
-    scope: ["identify", "guilds"],
+    scope: ["identify"],
   });
 
   const res = await fetch("/api/token", {
