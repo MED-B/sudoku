@@ -1,3 +1,6 @@
+window.onerror = (msg, src, line, col, err) => {
+  document.body.innerHTML = `<pre style="color:red;padding:20px">${msg}\n${src}:${line}\n${err?.stack}</pre>`;
+};
 const { DiscordSDK } = window.DiscordSDKModule ?? window["@discord/embedded-app-sdk"];
 
 const sdk    = new DiscordSDK(window.__DISCORD_CLIENT_ID__);
