@@ -7,6 +7,6 @@
     document.getElementById("status").textContent = "step 2: inline script works";
   </script>
   <script src="/socket.io/socket.io.js" onload="document.getElementById('status').textContent='step 3: socket.io loaded'" onerror="document.getElementById('status').textContent='ERROR: socket.io failed to load'"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.2.0/dist/index.min.js" onload="document.getElementById('status').textContent='step 4: discord sdk loaded — keys: '+Object.keys(window).filter(k=>k.toLowerCase().includes('discord')).join(', ')" onerror="document.getElementById('status').textContent='ERROR: discord sdk failed to load'"></script>
+ <script src="https://unpkg.com/@discord/embedded-app-sdk@1.2.0/output/index.js"></script>
 </body>
 </html>
