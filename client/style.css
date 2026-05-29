@@ -25,14 +25,8 @@ body {
 .player-section { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .player-section h2 { font-size: 1rem; color: #a0c4ff; }
 
-.divider {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #ff6b6b;
-  align-self: center;
-}
+.divider { font-size: 2rem; font-weight: bold; color: #ff6b6b; align-self: center; }
 
-/* ── Board ── */
 .board {
   display: grid;
   grid-template-columns: repeat(9, 36px);
@@ -51,22 +45,14 @@ body {
   outline: none;
 }
 
-/* Thicker borders for 3x3 boxes */
-.cell:nth-child(3n)   { border-right-color: #aaa; }
+.cell:nth-child(3n) { border-right-color: #aaa; }
 .cell:nth-child(n+19):nth-child(-n+27),
 .cell:nth-child(n+46):nth-child(-n+54) { border-bottom-color: #aaa; }
 
-.cell[data-given="true"] {
-  color: #a0c4ff;
-  background: #0f3460;
-  cursor: default;
-}
-
+.cell[data-given="true"] { color: #a0c4ff; background: #0f3460; cursor: default; }
 .cell.correct { background: #0a3020; color: #6bffa0; }
-
 #opp-board .cell { cursor: default; background: #0d1b2a; }
 
-/* ── Winner banner ── */
 #winner-banner {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;

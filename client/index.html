@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sudoku Battle</title>
+  <link rel="stylesheet" href="./style.css"/>
+</head>
+<body>
+  <div id="status">Connecting...</div>
+
+  <div id="game" class="hidden">
+    <div class="arena">
+      <div class="player-section">
+        <h2 id="my-name">You</h2>
+        <div id="my-board" class="board"></div>
+      </div>
+      <div class="divider">VS</div>
+      <div class="player-section">
+        <h2 id="opp-name">Waiting...</h2>
+        <div id="opp-board" class="board"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="winner-banner" class="hidden"></div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

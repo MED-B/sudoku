@@ -1,78 +1,47 @@
-// ── Error display ─────────────────────────────────────────────
-window.onerror = (msg, src, line, col, err) => {
-  document.body.innerHTML = `<pre style="color:red;padding:20px;white-space:pre-wrap">${msg}\n${src}:${line}\n${err?.stack}</pre>`;
-};
-window.onunhandledrejection = (e) => {
-  document.body.innerHTML = `<pre style="color:orange;padding:20px;white-space:pre-wrap">Unhandled Promise:\n${e.reason?.stack || e.reason}</pre>`;
-};
+import { DiscordSDK } from "@discord/embedded-app-sdk";
+import { io } from "socket.io-client";
+import "./style.css";
 
-// ── Discord SDK init ──────────────────────────────────────────
-setStatus("Loading SDK...");
-
-const SDK = window.DiscordSDK
-  ?? window.DiscordSDKModule?.DiscordSDK
-  ?? window["@discord/embedded-app-sdk"]?.DiscordSDK;
-
-if (!SDK) {
-  setStatus("ERROR: DiscordSDK not found on window. Check CDN.");
-  throw new Error("DiscordSDK not found");
-}
-
-const clientId = window.__DISCORD_CLIENT_ID__;
-if (!clientId || clientId === "__DISCORD_CLIENT_ID__") {
-  setStatus("ERROR: CLIENT_ID not injected by server.");
-  throw new Error("CLIENT_ID missing");
-}
-
-const sdk    = new SDK(clientId);
+// ── Init ──────────────────────────────────────────────────────
 const socket = io();
-
 let myUserId = null;
 let myBoard  = [];
 let puzzle   = [];
 
+setStatus("Fetching config...");
+
+const { clientId } = await fetch("/api/config").then(r => r.json());
+const sdk = new DiscordSDK(clientId);
+
 // ── Boot ──────────────────────────────────────────────────────
-(async () => {
-  setStatus("Waiting for SDK ready...");
-  await sdk.ready();
+setStatus("Waiting for SDK...");
+await sdk.ready();
 
-  setStatus("Authorizing...");
-  const { code } = await sdk.commands.authorize({ scope: ["identify"] });
+setStatus("Authorizing...");
+const { code } = await sdk.commands.authorize({ scope: ["identify"] });
 
-  setStatus("Fetching token...");
-  const res = await fetch("/api/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
-  });
+setStatus("Fetching token...");
+const { access_token } = await fetch("/api/token", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ code }),
+}).then(r => r.json());
 
-  const tokenData = await res.json();
-  if (!tokenData.access_token) {
-    setStatus("ERROR: No access_token in response: " + JSON.stringify(tokenData));
-    return;
-  }
+setStatus("Authenticating...");
+const auth = await sdk.commands.authenticate({ access_token });
+const user = auth.user;
 
-  setStatus("Authenticating with Discord...");
-  const auth = await sdk.commands.authenticate({ access_token: tokenData.access_token });
+myUserId = user.id;
+document.getElementById("my-name").textContent = user.username;
 
-  const user = auth.user;
-  if (!user) {
-    setStatus("ERROR: No user in auth response: " + JSON.stringify(auth));
-    return;
-  }
-
-  myUserId = user.id;
-  document.getElementById("my-name").textContent = user.username;
-
-  setStatus("Joining room...");
-  const roomId = sdk.instanceId;
-  socket.emit("join_room", { roomId, userId: user.id, username: user.username });
-})();
+setStatus("Joining room...");
+socket.emit("join_room", {
+  roomId:   sdk.instanceId,
+  userId:   user.id,
+  username: user.username,
+});
 
 // ── Socket events ─────────────────────────────────────────────
-socket.on("connect", () => setStatus("Socket connected, waiting for game..."));
-socket.on("connect_error", (err) => setStatus("Socket error: " + err.message));
-
 socket.on("game_state", ({ puzzle: p, players }) => {
   puzzle  = p;
   myBoard = p.map(r => [...r]);
@@ -92,10 +61,7 @@ socket.on("opponent_update", ({ row, col, value }) => {
 });
 
 socket.on("player_won", ({ username }) => {
-  const msg = username === document.getElementById("my-name").textContent
-    ? "🏆 You win!"
-    : `🏆 ${username} wins!`;
-  showBanner(msg);
+  showBanner(username === user.username ? "🏆 You win!" : `🏆 ${username} wins!`);
 });
 
 // ── My board ──────────────────────────────────────────────────
@@ -162,4 +128,8 @@ function updateOpponent(players) {
 // ── UI helpers ────────────────────────────────────────────────
 function showGame()      { document.getElementById("game").classList.remove("hidden"); }
 function setStatus(msg)  { const el = document.getElementById("status"); if (el) el.textContent = msg; }
-function showBanner(msg) { const b = document.getElementById("winner-banner"); b.textContent = msg; b.classList.remove("hidden"); }
+function showBanner(msg) {
+  const b = document.getElementById("winner-banner");
+  b.textContent = msg;
+  b.classList.remove("hidden");
+}
