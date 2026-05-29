@@ -2,10 +2,9 @@ require("dotenv").config({ path: __dirname + "/../.env" });
 
 const express = require("express");
 const http    = require("http");
-const fs      = require("fs");
+const path    = require("path");
 const { Server } = require("socket.io");
 const cors    = require("cors");
-const path    = require("path");
 
 const app    = express();
 const server = http.createServer(app);
@@ -13,16 +12,7 @@ const io     = new Server(server, { cors: { origin: "*" } });
 
 app.use(cors());
 app.use(express.json());
-
-// ── Inject CLIENT_ID into index.html ─────────────────────────
-app.get("/", (req, res) => {
-  const html = fs
-    .readFileSync(path.join(__dirname, "../public/index.html"), "utf8")
-    .replace("__DISCORD_CLIENT_ID__", process.env.DISCORD_CLIENT_ID);
-  res.send(html);
-});
-
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "dist")));
 
 // ── Discord OAuth token exchange ──────────────────────────────
 app.post("/api/token", async (req, res) => {
@@ -41,20 +31,25 @@ app.post("/api/token", async (req, res) => {
   res.json({ access_token: data.access_token });
 });
 
+// ── Serve client env vars ─────────────────────────────────────
+app.get("/api/config", (req, res) => {
+  res.json({ clientId: process.env.DISCORD_CLIENT_ID });
+});
+
 // ── Game state ────────────────────────────────────────────────
 const rooms = {};
 
 function generatePuzzle() {
   return [
-    [5,3,0, 0,7,0, 0,0,0],
-    [6,0,0, 1,9,5, 0,0,0],
-    [0,9,8, 0,0,0, 0,6,0],
-    [8,0,0, 0,6,0, 0,0,3],
-    [4,0,0, 8,0,3, 0,0,1],
-    [7,0,0, 0,2,0, 0,0,6],
-    [0,6,0, 0,0,0, 2,8,0],
-    [0,0,0, 4,1,9, 0,0,5],
-    [0,0,0, 0,8,0, 0,7,9],
+    [5,3,0,0,7,0,0,0,0],
+    [6,0,0,1,9,5,0,0,0],
+    [0,9,8,0,0,0,0,6,0],
+    [8,0,0,0,6,0,0,0,3],
+    [4,0,0,8,0,3,0,0,1],
+    [7,0,0,0,2,0,0,0,6],
+    [0,6,0,0,0,0,2,8,0],
+    [0,0,0,4,1,9,0,0,5],
+    [0,0,0,0,8,0,0,7,9],
   ];
 }
 
@@ -83,52 +78,32 @@ function sanitizePlayers(players) {
 
 // ── Socket.io ─────────────────────────────────────────────────
 io.on("connection", (socket) => {
-
   socket.on("join_room", ({ roomId, userId, username }) => {
     socket.join(roomId);
-
-    if (!rooms[roomId]) {
-      rooms[roomId] = { players: {}, puzzle: generatePuzzle() };
-    }
+    if (!rooms[roomId]) rooms[roomId] = { players: {}, puzzle: generatePuzzle() };
 
     const room = rooms[roomId];
     room.players[socket.id] = {
-      userId,
-      username,
+      userId, username,
       board: room.puzzle.map(row => [...row]),
       finished: false,
     };
 
-    socket.emit("game_state", {
-      puzzle:  room.puzzle,
-      players: sanitizePlayers(room.players),
-    });
-
-    socket.to(roomId).emit("player_joined", {
-      players: sanitizePlayers(room.players),
-    });
-
+    socket.emit("game_state", { puzzle: room.puzzle, players: sanitizePlayers(room.players) });
+    socket.to(roomId).emit("player_joined", { players: sanitizePlayers(room.players) });
     socket.data.roomId = roomId;
   });
 
   socket.on("cell_update", ({ row, col, value }) => {
     if (value !== 0 && (value < 1 || value > 9)) return;
-
-    const roomId = socket.data.roomId;
-    const room   = rooms[roomId];
+    const room = rooms[socket.data.roomId];
     if (!room) return;
-
     const player = room.players[socket.id];
     player.board[row][col] = value;
-
-    socket.to(roomId).emit("opponent_update", {
-      userId: player.userId,
-      row, col, value,
-    });
-
+    socket.to(socket.data.roomId).emit("opponent_update", { userId: player.userId, row, col, value });
     if (isSolved(player.board)) {
       player.finished = true;
-      io.to(roomId).emit("player_won", { username: player.username });
+      io.to(socket.data.roomId).emit("player_won", { username: player.username });
     }
   });
 
@@ -136,9 +111,7 @@ io.on("connection", (socket) => {
     const roomId = socket.data.roomId;
     if (!roomId || !rooms[roomId]) return;
     delete rooms[roomId].players[socket.id];
-    io.to(roomId).emit("player_left", {
-      players: sanitizePlayers(rooms[roomId].players),
-    });
+    io.to(roomId).emit("player_left", { players: sanitizePlayers(rooms[roomId].players) });
   });
 });
 
