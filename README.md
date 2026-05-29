@@ -36,4 +36,7 @@ npm run start
 Set your Railway URL in 3 places:
 - General Information → Embedded Application URL
 - OAuth2 → Redirects
-- Activities → URL Mappings → `/`
+- Activities → URL Mappings → `/` (make sure the app mapping passes `frame_id` to your app)
+
+> Note: Opening the Railway app URL directly in a browser will fail with `frame_id query param is not defined`.
+  The app must be launched from Discord Activity/embedded app context.
