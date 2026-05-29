@@ -2,44 +2,47 @@ import { DiscordSDK } from "@discord/embedded-app-sdk";
 import { io } from "socket.io-client";
 import "./style.css";
 
-// ── Init ──────────────────────────────────────────────────────
 const socket = io();
 let myUserId = null;
 let myBoard  = [];
 let puzzle   = [];
+let myUsername = null;
 
-setStatus("Fetching config...");
+async function main() {
+  setStatus("Fetching config...");
+  const { clientId } = await fetch("/api/config").then(r => r.json());
+  const sdk = new DiscordSDK(clientId);
 
-const { clientId } = await fetch("/api/config").then(r => r.json());
-const sdk = new DiscordSDK(clientId);
+  setStatus("Waiting for SDK...");
+  await sdk.ready();
 
-// ── Boot ──────────────────────────────────────────────────────
-setStatus("Waiting for SDK...");
-await sdk.ready();
+  setStatus("Authorizing...");
+  const { code } = await sdk.commands.authorize({ scope: ["identify"] });
 
-setStatus("Authorizing...");
-const { code } = await sdk.commands.authorize({ scope: ["identify"] });
+  setStatus("Fetching token...");
+  const { access_token } = await fetch("/api/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  }).then(r => r.json());
 
-setStatus("Fetching token...");
-const { access_token } = await fetch("/api/token", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ code }),
-}).then(r => r.json());
+  setStatus("Authenticating...");
+  const auth = await sdk.commands.authenticate({ access_token });
+  const user = auth.user;
 
-setStatus("Authenticating...");
-const auth = await sdk.commands.authenticate({ access_token });
-const user = auth.user;
+  myUserId   = user.id;
+  myUsername = user.username;
+  document.getElementById("my-name").textContent = user.username;
 
-myUserId = user.id;
-document.getElementById("my-name").textContent = user.username;
+  setStatus("Joining room...");
+  socket.emit("join_room", {
+    roomId:   sdk.instanceId,
+    userId:   user.id,
+    username: user.username,
+  });
+}
 
-setStatus("Joining room...");
-socket.emit("join_room", {
-  roomId:   sdk.instanceId,
-  userId:   user.id,
-  username: user.username,
-});
+main().catch(err => setStatus("Error: " + err.message));
 
 // ── Socket events ─────────────────────────────────────────────
 socket.on("game_state", ({ puzzle: p, players }) => {
@@ -61,7 +64,7 @@ socket.on("opponent_update", ({ row, col, value }) => {
 });
 
 socket.on("player_won", ({ username }) => {
-  showBanner(username === user.username ? "🏆 You win!" : `🏆 ${username} wins!`);
+  showBanner(username === myUsername ? "🏆 You win!" : `🏆 ${username} wins!`);
 });
 
 // ── My board ──────────────────────────────────────────────────
