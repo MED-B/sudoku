@@ -8,7 +8,19 @@ let myBoard  = [];
 let puzzle   = [];
 let myUsername = null;
 
+function isDiscordEmbed() {
+  return new URLSearchParams(window.location.search).has("frame_id");
+}
+
 async function main() {
+  if (!isDiscordEmbed()) {
+    setStatus(
+      "This app must be opened from Discord Activity. " +
+      "Do not open it directly in the browser."
+    );
+    return;
+  }
+
   setStatus("Fetching config...");
   const { clientId } = await fetch("/api/config").then(r => r.json());
   const sdk = new DiscordSDK(clientId);
@@ -42,7 +54,10 @@ async function main() {
   });
 }
 
-main().catch(err => setStatus("Error: " + err.message));
+main().catch(err => {
+  console.error(err);
+  setStatus("Error: " + (err.message || err));
+});
 
 // ── Socket events ─────────────────────────────────────────────
 socket.on("game_state", ({ puzzle: p, players }) => {
