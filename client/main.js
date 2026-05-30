@@ -33,10 +33,11 @@ async function main() {
   console.log("[sudoku] fetched clientId:", clientId, "location.search:", location.search);
   // Coerce clientId to string to avoid type issues (numbers/objects)
   const clientIdStr = clientId == null ? null : String((clientId && clientId.clientId) || clientId);
+  console.log("[sudoku] initializing DiscordSDK with:", clientIdStr, "(type:", typeof clientIdStr + ")");
   if (!clientIdStr) throw new Error("No client id provided by server");
   let sdk;
   try {
-    console.log("[sudoku] initializing DiscordSDK with:", clientIdStr, "(type:", typeof clientIdStr + ")");
+    
     sdk = new DiscordSDK(clientIdStr);
   } catch (e) {
     console.error("[sudoku] DiscordSDK constructor error:", e, "clientIdRaw:", clientId);
