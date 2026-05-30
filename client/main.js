@@ -31,8 +31,17 @@ async function main() {
   const { clientId } = configData;
   // Debug: log the clientId fetched from the server so we can see it in Discord DevTools
   console.log("[sudoku] fetched clientId:", clientId, "location.search:", location.search);
-  if (!clientId) throw new Error("No client id provided by server");
-  const sdk = new DiscordSDK(clientId);
+  // Coerce clientId to string to avoid type issues (numbers/objects)
+  const clientIdStr = clientId == null ? null : String((clientId && clientId.clientId) || clientId);
+  if (!clientIdStr) throw new Error("No client id provided by server");
+  let sdk;
+  try {
+    console.log("[sudoku] initializing DiscordSDK with:", clientIdStr, "(type:", typeof clientIdStr + ")");
+    sdk = new DiscordSDK(clientIdStr);
+  } catch (e) {
+    console.error("[sudoku] DiscordSDK constructor error:", e, "clientIdRaw:", clientId);
+    throw e;
+  }
 
   setStatus("Waiting for SDK...");
   await sdk.ready();
