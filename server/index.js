@@ -33,7 +33,11 @@ app.post("/api/token", async (req, res) => {
 
 // ── Serve client env vars ─────────────────────────────────────
 app.get("/api/config", (req, res) => {
-  res.json({ clientId: process.env.DISCORD_CLIENT_ID });
+  const clientId = process.env.DISCORD_CLIENT_ID;
+  if (!clientId) {
+    return res.status(500).json({ error: "DISCORD_CLIENT_ID not set on server" });
+  }
+  res.json({ clientId });
 });
 
 // ── Game state ────────────────────────────────────────────────
@@ -117,4 +121,8 @@ io.on("connection", (socket) => {
 
 // ── Start ─────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
+if (!process.env.DISCORD_CLIENT_ID) {
+  console.warn("WARNING: DISCORD_CLIENT_ID is not set. The client will fail to initialize inside Discord.");
+}
+
 server.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
