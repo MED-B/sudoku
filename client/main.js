@@ -33,33 +33,43 @@ async function main() {
   console.log("[sudoku] fetched clientId:", clientId, "location.search:", location.search);
   // Coerce clientId to string to avoid type issues (numbers/objects)
   const clientIdStr = clientId == null ? null : String((clientId && clientId.clientId) || clientId);
-  console.log("[sudoku] initializing DiscordSDK with:", clientIdStr, "(type:", typeof clientIdStr + ")");
+  console.log("[sudoku] clientId (raw):", clientId, "clientIdStr:", clientIdStr, "(type:", typeof clientIdStr + ")");
   if (!clientIdStr) throw new Error("No client id provided by server");
   let sdk;
   try {
-    
+    console.log("[sudoku] About to call new DiscordSDK(", JSON.stringify(clientIdStr), ")");
     sdk = new DiscordSDK(clientIdStr);
+    console.log("[sudoku] DiscordSDK initialized successfully");
   } catch (e) {
-    console.error("[sudoku] DiscordSDK constructor error:", e, "clientIdRaw:", clientId);
+    console.error("[sudoku] DiscordSDK constructor error:", e.message, "full error:", e, "clientIdRaw:", clientId, "clientIdStr:", clientIdStr);
     throw e;
   }
 
   setStatus("Waiting for SDK...");
+  console.log("[sudoku] Calling sdk.ready()");
   await sdk.ready();
+  console.log("[sudoku] sdk.ready() completed");
 
   setStatus("Authorizing...");
+  console.log("[sudoku] Calling sdk.commands.authorize()");
   const { code } = await sdk.commands.authorize({ scope: ["identify"] });
+  console.log("[sudoku] sdk.commands.authorize() completed, code:", code);
 
   setStatus("Fetching token...");
+  console.log("[sudoku] Fetching token from /api/token");
   const { access_token } = await fetch("/api/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code }),
   }).then(r => r.json());
+  console.log("[sudoku] Token fetched, access_token:", access_token ? "present" : "missing");
 
   setStatus("Authenticating...");
+  console.log("[sudoku] Calling sdk.commands.authenticate()");
   const auth = await sdk.commands.authenticate({ access_token });
+  console.log("[sudoku] sdk.commands.authenticate() completed");
   const user = auth.user;
+  console.log("[sudoku] User:", user.username, "ID:", user.id);
 
   myUserId   = user.id;
   myUsername = user.username;
