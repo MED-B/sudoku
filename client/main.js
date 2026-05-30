@@ -52,7 +52,13 @@ async function main() {
 
   setStatus("Authorizing...");
   console.log("[sudoku] Calling sdk.commands.authorize()");
-  const { code } = await sdk.commands.authorize({ scope: ["identify", "rpc.activities.write"] });
+  const { code } = await sdk.commands.authorize({
+    client_id: clientId,        // ← this is what's missing
+    response_type: "code",
+    state: "",
+    prompt: "none",
+    scope: ["identify", "guilds", "applications.commands"],
+  });
   console.log("[sudoku] sdk.commands.authorize() completed, code:", code);
 
   setStatus("Fetching token...");
