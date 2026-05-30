@@ -29,6 +29,8 @@ async function main() {
     throw new Error("Server configuration error: " + err);
   }
   const { clientId } = configData;
+  // Debug: log the clientId fetched from the server so we can see it in Discord DevTools
+  console.log("[sudoku] fetched clientId:", clientId, "location.search:", location.search);
   if (!clientId) throw new Error("No client id provided by server");
   const sdk = new DiscordSDK(clientId);
 
