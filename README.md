@@ -40,3 +40,10 @@ Set your Railway URL in 3 places:
 
 > Note: Opening the Railway app URL directly in a browser will fail with `frame_id query param is not defined`.
   The app must be launched from Discord Activity/embedded app context.
+
+## Troubleshooting
+- `This server doesn't have access to the requested activity` usually means Discord is blocking the activity for that server.
+- Unverified/custom activities are often restricted to servers with fewer than 25 members or servers where the app is installed.
+- Check server settings for `Use Activities` / `Use External Apps` permissions.
+- Make sure the Discord app is added to the target server and the activity is enabled there.
+- If only you can open the activity, the app is probably not available to other members yet.

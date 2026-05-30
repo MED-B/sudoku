@@ -22,7 +22,14 @@ async function main() {
   }
 
   setStatus("Fetching config...");
-  const { clientId } = await fetch("/api/config").then(r => r.json());
+  const configResp = await fetch("/api/config");
+  const configData = await configResp.json().catch(() => ({}));
+  if (!configResp.ok) {
+    const err = configData && configData.error ? configData.error : `Status ${configResp.status}`;
+    throw new Error("Server configuration error: " + err);
+  }
+  const { clientId } = configData;
+  if (!clientId) throw new Error("No client id provided by server");
   const sdk = new DiscordSDK(clientId);
 
   setStatus("Waiting for SDK...");
