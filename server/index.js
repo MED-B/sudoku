@@ -40,6 +40,18 @@ app.get("/api/config", (req, res) => {
   res.json({ clientId });
 });
 
+// Debug endpoint (safe): reports whether env vars are present and returns a masked clientId
+function maskId(s) {
+  if (!s) return null;
+  if (s.length <= 8) return s.replace(/.(?=.{4})/g, "*");
+  return s.slice(0, 4) + "*".repeat(Math.max(0, s.length - 8)) + s.slice(-4);
+}
+
+app.get("/api/debug-env", (req, res) => {
+  const id = process.env.DISCORD_CLIENT_ID || null;
+  res.json({ clientIdSet: !!id, clientIdMasked: id ? maskId(id) : null });
+});
+
 // ── Game state ────────────────────────────────────────────────
 const rooms = {};
 
