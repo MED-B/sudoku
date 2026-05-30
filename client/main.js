@@ -52,7 +52,7 @@ async function main() {
 
   setStatus("Authorizing...");
   console.log("[sudoku] Calling sdk.commands.authorize()");
-  const { code } = await sdk.commands.authorize({ scope: ["identify"] });
+  const { code } = await sdk.commands.authorize({ scope: ["identify", "rpc.activities.write"] });
   console.log("[sudoku] sdk.commands.authorize() completed, code:", code);
 
   setStatus("Fetching token...");
